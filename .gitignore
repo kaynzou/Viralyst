@@ -1,5 +1,16 @@
+# Python
 .venv/
 __pycache__/
 *.pyc
+.pytest_cache/
+
+# Frontend (Phase 5)
+node_modules/
+.next/
+
+# Secrets and local data
 .env
 uploads/
+
+# macOS
+.DS_Store

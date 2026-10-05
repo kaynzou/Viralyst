@@ -6,7 +6,8 @@ decides whether to keep spreading it. Every later phase plugs into this.
 
 ## Map of the code
 
-Read the files in this order. Each one holds one idea.
+All the Python code lives in the `backend/` folder, and every command below is run from
+there (`cd backend` first). Read the files in this order. Each one holds one idea.
 
 | File | Idea | Plain English |
 |---|---|---|
@@ -120,6 +121,32 @@ running 500 simulations in a second. With LLM agents, every run costs money.
 - **uv** manages Python versions, the virtual environment (`.venv/`) and packages.
   `uv run run.py ...` makes sure everything is set up, then runs the file.
 - **git** tracks every version of your code. The project already has a repository.
+
+## Tests: code that checks your code
+
+The `tests/` folder holds small functions that run parts of the engine and check the
+answer with `assert`. If the assert is false, the test fails. For example:
+
+```python
+def test_typical_reel_scores_exactly_one():
+    assert score(dict(BENCHMARKS)) == pytest.approx(1.0)
+```
+
+Run them all with:
+
+```bash
+uv run pytest
+```
+
+Tests catch mistakes you didn't know you made. Change a weight in `algorithm.py` so they
+no longer add up to 1.0 and run `uv run pytest`: three tests fail and tell you exactly what broke.
+A few ideas worth noticing:
+
+- **Fixtures** (`tests/conftest.py`) prepare things many tests need, like loading the example videos.
+- **Seeds make random code testable.** "Same seed gives the same result" is a test.
+- **Some tests check behavior, not exact numbers.** "A stronger hook means fewer people
+  scroll past" stays true even if we retune the formulas.
+- **`pytest.approx`** compares decimals safely, because `0.1 + 0.2 == 0.3` is `False` in Python.
 
 ## Exercises (try them, then predict before you run)
 

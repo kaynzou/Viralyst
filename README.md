@@ -1,28 +1,60 @@
 # Viralyst
 
-Upload a product demo video and see how it might spread on Instagram before you post it.
+**Test your product demo video before you post it.**
 
-Viralyst builds a crowd of simulated people, some in your target audience and some outside it,
-and has them react to your video: scroll past, watch, like, comment, share, save, follow.
-A simplified Instagram-style algorithm scores each wave of viewers and decides whether to push
-the video to a bigger, broader audience, just as Reels distribution works.
+Viralyst simulates an audience of personas, inside and outside your target market, and an
+Instagram-style algorithm that decides how far your video spreads. Get the odds of it taking off,
+see who engaged, and learn what to fix before you publish.
 
-## Run it
+<p align="center">
+  <img src="docs/images/how-it-works.svg" alt="A video brief goes to wave 1 (your followers). Each wave that scores at least 1.0 unlocks a bigger wave with more strangers, up to the broad Reels audience, and then a report." width="100%">
+</p>
+
+## How it works
+
+1. **Describe the video:** its hook, quality, topics and length. Uploading the video itself is coming soon.
+2. **Wave 1 reacts.** Each persona scrolls past, or watches, likes, comments, shares, saves or follows.
+3. **The algorithm scores the wave** against a typical reel. Shares and watch time count most.
+   Beat it and the video moves to a bigger, broader wave. Otherwise it stops.
+4. **Read the report:** how far it got, which audiences engaged, and your weakest signal with a fix.
+
+## Example
+
+<p align="center">
+  <img src="docs/images/report.svg" alt="Simulation report for a demo video: four waves, a STRONG verdict, a segment breakdown and engagement signals." width="100%">
+</p>
+
+One run is one possible future, so run it many times to see the odds:
+
+<p align="center">
+  <img src="docs/images/odds.svg" alt="Over 200 simulations, a weak demo flops 99% of the time while a strong demo is strong or viral 84% of the time." width="100%">
+</p>
+
+## Quick start
 
 Requires [uv](https://docs.astral.sh/uv/).
 
 ```bash
-uv run run.py examples/good_demo.json            # one simulation, full report
-uv run run.py examples/good_demo.json --seed 7   # repeatable run
-uv run run.py examples/weak_demo.json --runs 200 # how often each outcome happens
+cd backend
+uv run run.py examples/good_demo.json            # one simulation
+uv run run.py examples/weak_demo.json --runs 200 # the odds
+uv run pytest                                    # run the tests
+```
+
+## Project structure
+
+```
+backend/    Python simulation engine, CLI and tests
+frontend/   Web app (coming in Phase 5)
+docs/       Step-by-step lessons and README images
 ```
 
 ## Roadmap
 
-- [x] **Phase 1: Simulation engine** with rule-based agents ([lesson](docs/learn/01-simulation-engine.md))
-- [ ] **Phase 2: LLM agents.** Personas decide and write comments with an LLM
-- [ ] **Phase 3: Persona generator.** Describe your audience in words, get a diverse crowd
-- [ ] **Phase 4: Video understanding.** ffmpeg + transcript + vision model produce the video brief
-- [ ] **Phase 5: API + web UI.** Upload, watch the cascade live, read the report
-- [ ] **Phase 6: Calibration + A/B.** Compare against real results and between video versions
-- [ ] **Phase 7: Deploy and launch**
+- [x] **Phase 1:** Simulation engine with rule-based agents
+- [ ] **Phase 2:** LLM-powered personas that decide and write comments
+- [ ] **Phase 3:** Persona generator from a plain-English audience description
+- [ ] **Phase 4:** Video understanding (frames, transcript, vision model)
+- [ ] **Phase 5:** API and web app with a live view of the cascade
+- [ ] **Phase 6:** Calibration against real results, A/B testing
+- [ ] **Phase 7:** Deploy
