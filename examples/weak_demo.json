@@ -1,0 +1,17 @@
+{
+  "audience": {
+    "interests": ["productivity", "ai", "startups"],
+    "min_age": 22,
+    "max_age": 35
+  },
+  "video": {
+    "title": "Introducing TaskFlow 2.0",
+    "description": "Starts with a 4-second animated company logo, then a slow screen recording of the settings page with stock background music and no voiceover or captions. Lists features one by one.",
+    "topics": ["productivity", "saas"],
+    "length_seconds": 75,
+    "hook_strength": 0.2,
+    "quality": 0.45,
+    "shareability": 0.15,
+    "save_value": 0.3
+  }
+}

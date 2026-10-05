@@ -1,0 +1,17 @@
+{
+  "audience": {
+    "interests": ["productivity", "ai", "startups"],
+    "min_age": 22,
+    "max_age": 35
+  },
+  "video": {
+    "title": "I cleared 4,212 unread emails in 30 seconds",
+    "description": "Opens on an inbox counter reading 4,212 unread that starts dropping fast. The founder's voiceover shows the AI tool sorting mail, drafting replies and archiving newsletters, with big on-screen captions. Ends on 'Inbox: 0' and a 'link in bio'.",
+    "topics": ["productivity", "ai"],
+    "length_seconds": 28,
+    "hook_strength": 0.85,
+    "quality": 0.75,
+    "shareability": 0.7,
+    "save_value": 0.6
+  }
+}
