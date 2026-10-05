@@ -15,7 +15,8 @@ class VideoBrief:
     For now we write it by hand in a JSON file.
     """
 
-    title: str
+    title: str  # the caption people see
+    hook: str  # what happens in the first 3 seconds
     description: str
     topics: list[str]
     length_seconds: int
@@ -53,15 +54,14 @@ class Reaction:
 
     persona: Persona
     watch_fraction: float  # 0-1: how much of the video they watched
+    scrolled_past: bool = False  # swiped away within a second or two
     liked: bool = False
     commented: bool = False
     shared: bool = False
     saved: bool = False
     followed: bool = False
-
-    @property
-    def scrolled_past(self) -> bool:
-        return self.watch_fraction < 0.15
+    thought: str = ""  # their first impression, in their own words (AI personas only)
+    comment: str = ""  # what they wrote, if they commented (AI personas only)
 
 
 @dataclass

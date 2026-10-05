@@ -6,6 +6,7 @@
   },
   "video": {
     "title": "Introducing TaskFlow 2.0",
+    "hook": "A spinning animated TaskFlow logo on a white background with upbeat stock music.",
     "description": "Starts with a 4-second animated company logo, then a slow screen recording of the settings page with stock background music and no voiceover or captions. Lists features one by one.",
     "topics": ["productivity", "saas"],
     "length_seconds": 75,

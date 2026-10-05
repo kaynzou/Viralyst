@@ -32,12 +32,13 @@ One run is one possible future, so run it many times to see the odds:
 
 ## Quick start
 
-Requires [uv](https://docs.astral.sh/uv/).
+Requires [uv](https://docs.astral.sh/uv/). AI personas also need a [Claude API key](https://console.anthropic.com/settings/keys) in `backend/.env` (see `backend/.env.example`).
 
 ```bash
 cd backend
 uv run run.py examples/good_demo.json            # one simulation
 uv run run.py examples/weak_demo.json --runs 200 # the odds
+uv run run.py examples/good_demo.json --agent ai # AI personas played by Claude
 uv run pytest                                    # run the tests
 ```
 
@@ -52,7 +53,7 @@ docs/       Step-by-step lessons and README images
 ## Roadmap
 
 - [x] **Phase 1:** Simulation engine with rule-based agents
-- [ ] **Phase 2:** LLM-powered personas that decide and write comments
+- [x] **Phase 2:** AI personas (Claude) that decide and write comments
 - [ ] **Phase 3:** Persona generator from a plain-English audience description
 - [ ] **Phase 4:** Video understanding (frames, transcript, vision model)
 - [ ] **Phase 5:** API and web app with a live view of the cascade

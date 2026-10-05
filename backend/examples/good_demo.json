@@ -6,6 +6,7 @@
   },
   "video": {
     "title": "I cleared 4,212 unread emails in 30 seconds",
+    "hook": "A phone screen shows an inbox counter reading 4,212 unread, and the number starts dropping fast while a voice says: \"watch this\".",
     "description": "Opens on an inbox counter reading 4,212 unread that starts dropping fast. The founder's voiceover shows the AI tool sorting mail, drafting replies and archiving newsletters, with big on-screen captions. Ends on 'Inbox: 0' and a 'link in bio'.",
     "topics": ["productivity", "ai"],
     "length_seconds": 28,

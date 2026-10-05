@@ -11,6 +11,7 @@ node_modules/
 # Secrets and local data
 .env
 uploads/
+.cache/
 
 # macOS
 .DS_Store

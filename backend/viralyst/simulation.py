@@ -26,7 +26,9 @@ def run_cascade(video: VideoBrief, audience: Audience, agent, seed: int | None =
 
     for number, wave in enumerate(WAVES, start=1):
         crowd = make_crowd(rng, audience, wave.size, wave.target_fraction)
-        reactions = [agent.react(persona, video, rng) for persona in crowd]
+        reactions = agent.react_wave(crowd, video, rng)
+        if not reactions:
+            raise RuntimeError(f"No persona in wave {number} produced a reaction, so the wave can't be scored.")
         rates = engagement_rates(reactions)
         result = WaveResult(number, wave, reactions, rates, score(rates), PUSH_THRESHOLD)
         results.append(result)

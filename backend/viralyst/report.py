@@ -44,6 +44,9 @@ def print_report(video: VideoBrief, results: list[WaveResult], seed: int) -> Non
     print()
     print_sample_viewers(results[0].reactions)
     print()
+    if any(r.comment for r in reactions):
+        print_comments(reactions)
+        print()
 
 
 def print_wave_table(results: list[WaveResult]) -> None:
@@ -89,6 +92,16 @@ def print_sample_viewers(reactions: list[Reaction], count: int = 5) -> None:
                    ("shared", r.shared), ("saved", r.saved), ("followed", r.followed)] if did]
         what = "scrolled past" if r.scrolled_past else f"watched {r.watch_fraction:.0%}" + "".join(f", {a}" for a in actions)
         print(f"  {p.name:<11} {p.age:>2}, into {'/'.join(p.interests):<30} {what}")
+        if r.thought:
+            print(f'              thinking: "{r.thought}"')
+
+
+def print_comments(reactions: list[Reaction], count: int = 8) -> None:
+    commenters = [r for r in reactions if r.comment]
+    print(f"What people commented ({len(commenters)} comments):")
+    for r in commenters[:count]:
+        who = "target audience" if r.persona.in_target else "outside target"
+        print(f'  "{r.comment}"  ({r.persona.name}, {who})')
 
 
 def print_many_runs(video: VideoBrief, all_results: list[list[WaveResult]]) -> None:
