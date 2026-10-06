@@ -19,6 +19,16 @@ see who engaged, and learn what to fix before you publish.
    Beat it and the video moves to a bigger, broader wave. Otherwise it stops.
 4. **Read the report:** how far it got, which audiences engaged, and your weakest signal with a fix.
 
+## From a real video
+
+<p align="center">
+  <img src="docs/images/phase4-demo.gif" alt="The sample demo video plays on the left. On the right, the frames Viralyst captures appear as it takes them (every half second during the first 3 seconds), and the words Whisper hears appear as they are spoken, with the opening words highlighted." width="100%">
+</p>
+
+Viralyst samples frames where viewers decide (every half second in the first 3 seconds) and
+transcribes the voiceover with Whisper, both on your machine. Claude then turns them into the video brief.
+[Watch the sample with sound](backend/examples/sample_demo.mp4).
+
 ## Example
 
 <p align="center">

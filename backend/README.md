@@ -11,6 +11,7 @@ uv run run.py examples/good_demo.json --audience examples/other.audience.json
 uv run build_audience.py "who it's for" --out examples/mine.audience.json
 uv run analyze_video.py examples/sample_demo.mp4 --out examples/sample_demo.json --voiceover
 uv run scripts/make_sample_video.py              # redraw the sample video (macOS)
+uv run scripts/readme_demo.py                    # redraw the Phase 4 demo GIF
 uv run pytest                                    # run the tests
 uv run scripts/readme_images.py                  # redraw the README images
 ```
