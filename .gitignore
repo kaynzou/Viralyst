@@ -12,6 +12,7 @@ node_modules/
 .env
 uploads/
 .cache/
+*.wav
 
 # macOS
 .DS_Store

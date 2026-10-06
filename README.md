@@ -12,7 +12,8 @@ see who engaged, and learn what to fix before you publish.
 
 ## How it works
 
-1. **Describe the video:** its hook, quality, topics and length. Uploading the video itself is coming soon.
+1. **Analyze the video:** ffmpeg pulls out frames and audio, Whisper writes down what's said, and Claude
+   rates the hook, quality and topics, and suggests a stronger opening line.
 2. **Wave 1 reacts.** Each persona scrolls past, or watches, likes, comments, shares, saves or follows.
 3. **The algorithm scores the wave** against a typical reel. Shares and watch time count most.
    Beat it and the video moves to a bigger, broader wave. Otherwise it stops.
@@ -32,7 +33,7 @@ One run is one possible future, so run it many times to see the odds:
 
 ## Quick start
 
-Requires [uv](https://docs.astral.sh/uv/). AI personas also need a [Claude API key](https://console.anthropic.com/settings/keys) in `backend/.env` (see `backend/.env.example`).
+Requires [uv](https://docs.astral.sh/uv/) and [ffmpeg](https://ffmpeg.org) (`brew install ffmpeg`). The AI features also need a [Claude API key](https://console.anthropic.com/settings/keys) in `backend/.env` (see `backend/.env.example`).
 
 ```bash
 cd backend
@@ -40,6 +41,7 @@ uv run run.py examples/good_demo.json            # one simulation
 uv run run.py examples/weak_demo.json --runs 200 # the odds
 uv run run.py examples/good_demo.json --agent ai # AI personas played by Claude
 uv run build_audience.py "who it's for" --out examples/mine.audience.json
+uv run analyze_video.py examples/sample_demo.mp4 --out examples/sample_demo.json --voiceover
 uv run pytest                                    # run the tests
 ```
 
@@ -56,7 +58,7 @@ docs/       Step-by-step lessons and README images
 - [x] **Phase 1:** Simulation engine with rule-based agents
 - [x] **Phase 2:** AI personas (Claude) that decide and write comments
 - [x] **Phase 3:** Realistic personas and an audience builder from a plain-English description
-- [ ] **Phase 4:** Video understanding (frames, transcript, vision model)
+- [x] **Phase 4:** Video understanding (frames, Whisper transcript, Claude vision, Supertonic voiceover)
 - [ ] **Phase 5:** API and web app with a live view of the cascade
 - [ ] **Phase 6:** Calibration against real results, A/B testing
 - [ ] **Phase 7:** Deploy
