@@ -7,7 +7,7 @@ import anthropic
 import httpx2
 import pytest
 
-from viralyst.llm_agent import LLMAgent, Decision, estimate_cost, model_options
+from viralyst.llm_agent import Decision, LLMAgent, describe_persona, estimate_cost, model_options
 from viralyst.personas import make_crowd
 from viralyst.simulation import furthest_stage, run_cascade
 
@@ -143,3 +143,10 @@ def test_cheaper_models_cost_less(good_demo):
     video, _ = good_demo
     costs = [estimate_cost(model, video, 450) for model in ["claude-haiku-4-5", "claude-sonnet-5-5", "claude-opus-5-5"]]
     assert 0 < costs[0] < costs[1] < costs[2]
+
+
+def test_rich_personas_are_described_to_claude(good_demo):
+    _, audience = good_demo
+    person = make_crowd(random.Random(6), audience, 1, target_fraction=1.0)[0]
+    text = describe_persona(person)
+    assert person.bio in text and person.occupation in text and person.moment in text

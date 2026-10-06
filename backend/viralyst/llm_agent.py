@@ -7,35 +7,15 @@ explain their first impression and write real comments.
 
 import hashlib
 import sys
-import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
-from dataclasses import dataclass
 from pathlib import Path
 
 import anthropic
 from pydantic import BaseModel
 
+from .claude import DEFAULT_MODEL, PRICES, Usage, fallback_options
 from .models import Persona, Reaction, VideoBrief
-
-
-@dataclass
-class Pricing:
-    """US dollars per million tokens."""
-
-    input: float
-    output: float
-    cache_read: float
-    cache_write: float
-
-
-# Anthropic's prices. Writing to the cache costs 1.25x normal input; reading from it is far cheaper.
-PRICES = {
-    "claude-opus-5-5": Pricing(input=4.00, output=20.00, cache_read=0.20, cache_write=5.00),
-    "claude-sonnet-5-5": Pricing(input=2.00, output=10.00, cache_read=0.20, cache_write=2.50),
-    "claude-haiku-4-5": Pricing(input=1.00, output=5.00, cache_read=0.10, cache_write=1.25),
-}
-DEFAULT_MODEL = "claude-opus-5-5"
 
 # Answers already received are saved here, so re-running the same persona on the same video is free.
 CACHE_DIR = Path(__file__).resolve().parent.parent / ".cache" / "decisions"
@@ -118,15 +98,22 @@ def describe_persona(persona: Persona) -> str:
     else:
         sharing = "often sends reels to friends and group chats"
 
-    return (
-        "The person:\n"
-        f"- {persona.name}, age {persona.age}\n"
-        f"- Interested in: {', '.join(persona.interests)}\n"
-        f"- Personality: {taste}\n"
-        f"- Sharing habits: {sharing}\n"
-        f"- Attention: gets restless after about {persona.attention_span} seconds\n\n"
-        "What does this person do?"
-    )
+    lines = [f"- {persona.name}, age {persona.age}"]
+    if persona.location:
+        lines.append(f"- Lives in: {persona.location}")
+    if persona.occupation:
+        lines.append(f"- Works as: {persona.occupation}")
+    if persona.bio:
+        lines.append(f"- About them: {persona.bio}")
+    lines += [
+        f"- Interested in: {', '.join(persona.interests)}",
+        f"- Personality: {taste}",
+        f"- Sharing habits: {sharing}",
+        f"- Attention: gets restless after about {persona.attention_span} seconds",
+    ]
+    if persona.moment:
+        lines.append(f"- Right now: scrolling {persona.moment}")
+    return "The person:\n" + "\n".join(lines) + "\n\nWhat does this person do?"
 
 
 def model_options(model: str) -> dict:
@@ -134,13 +121,8 @@ def model_options(model: str) -> dict:
     the SDK adds to them and many threads build requests at once."""
     if model == "claude-haiku-4-5":
         return {}  # Haiku 4.5 has no effort setting and only thinks when asked to
-    return {
-        # A scroll decision doesn't need deep thinking, and thinking tokens are billed.
-        "output_config": {"effort": "low"},
-        # If a safety check ever declines a request, Anthropic retries it on another model.
-        "betas": ["server-side-fallback-2026-07-01"],
-        "fallbacks": "default",
-    }
+    # A scroll decision doesn't need deep thinking, and thinking tokens are billed.
+    return {"output_config": {"effort": "low"}, **fallback_options(model)}
 
 
 def to_reaction(persona: Persona, video: VideoBrief, d: Decision) -> Reaction:
@@ -172,44 +154,6 @@ def estimate_cost(model: str, video: VideoBrief, calls: int) -> float:
     output_tokens = 150 if model == "claude-haiku-4-5" else 400  # Opus and Sonnet also think a little
     per_call = ((shared_tokens + persona_tokens) * p.input + output_tokens * p.output) / 1_000_000
     return per_call * calls
-
-
-class Usage:
-    """Adds up tokens and dollars across many calls running at the same time."""
-
-    def __init__(self, pricing: Pricing):
-        self.pricing = pricing
-        self.lock = threading.Lock()  # stops two threads from updating the counts at once
-        self.calls = self.reused = self.failures = 0
-        self.input_tokens = self.output_tokens = self.cache_read = self.cache_write = 0
-
-    def add(self, usage) -> None:
-        with self.lock:
-            self.calls += 1
-            self.input_tokens += usage.input_tokens
-            self.output_tokens += usage.output_tokens
-            self.cache_read += usage.cache_read_input_tokens or 0
-            self.cache_write += usage.cache_creation_input_tokens or 0
-
-    def add_reused(self) -> None:
-        with self.lock:
-            self.reused += 1
-
-    def add_failure(self) -> None:
-        with self.lock:
-            self.failures += 1
-
-    @property
-    def cost(self) -> float:
-        p = self.pricing
-        return (self.input_tokens * p.input + self.output_tokens * p.output
-                + self.cache_read * p.cache_read + self.cache_write * p.cache_write) / 1_000_000
-
-    def summary(self) -> str:
-        total_in = self.input_tokens + self.cache_read + self.cache_write
-        return (f"AI usage: {self.calls} calls to Claude, {self.reused} answers reused from disk, "
-                f"{self.failures} failed. Tokens: {total_in:,} in ({self.cache_read:,} read from cache), "
-                f"{self.output_tokens:,} out. Cost: ${self.cost:.2f}")
 
 
 class LLMAgent:

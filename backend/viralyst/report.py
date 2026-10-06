@@ -91,7 +91,10 @@ def print_sample_viewers(reactions: list[Reaction], count: int = 5) -> None:
         actions = [name for name, did in [("liked", r.liked), ("commented", r.commented),
                    ("shared", r.shared), ("saved", r.saved), ("followed", r.followed)] if did]
         what = "scrolled past" if r.scrolled_past else f"watched {r.watch_fraction:.0%}" + "".join(f", {a}" for a in actions)
-        print(f"  {p.name:<11} {p.age:>2}, into {'/'.join(p.interests):<30} {what}")
+        who = f"{p.occupation} ({p.location.split(',')[0]})" if p.occupation else "into " + "/".join(p.interests)
+        if len(who) > 44:
+            who = who[:43] + "…"
+        print(f"  {p.name:<11} {p.age:>2}, {who:<45} {what}")
         if r.thought:
             print(f'              thinking: "{r.thought}"')
 

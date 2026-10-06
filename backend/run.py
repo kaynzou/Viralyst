@@ -4,11 +4,10 @@
     uv run run.py examples/good_demo.json --seed 7     # repeat an exact run
     uv run run.py examples/good_demo.json --runs 200   # how often each outcome happens
     uv run run.py examples/good_demo.json --agent ai   # AI personas (asks before spending money)
+    uv run run.py examples/good_demo.json --audience examples/other.audience.json
 """
 
 import argparse
-import json
-import os
 import random
 import sys
 
@@ -16,16 +15,12 @@ import anthropic
 from dotenv import load_dotenv
 
 from viralyst.agent import MockAgent
-from viralyst.llm_agent import CACHE_DIR, DEFAULT_MODEL, PRICES, LLMAgent, estimate_cost
-from viralyst.models import Audience, VideoBrief
+from viralyst.claude import BAD_KEY, DEFAULT_MODEL, MISSING_KEY, PRICES, has_api_key
+from viralyst.llm_agent import CACHE_DIR, LLMAgent, estimate_cost
+from viralyst.loading import load_audience, load_example
+from viralyst.models import VideoBrief
 from viralyst.report import print_many_runs, print_report
 from viralyst.simulation import WAVES, run_cascade
-
-
-def load_example(path: str) -> tuple[VideoBrief, Audience]:
-    with open(path) as f:
-        data = json.load(f)
-    return VideoBrief(**data["video"]), Audience(**data["audience"])
 
 
 def confirm_cost(model: str, video: VideoBrief, runs: int) -> bool:
@@ -41,6 +36,7 @@ def main() -> None:
 
     parser = argparse.ArgumentParser(description="Simulate how a video spreads on Instagram.")
     parser.add_argument("example", help="JSON file with a video brief and a target audience")
+    parser.add_argument("--audience", help="use this audience file instead of the one in the example")
     parser.add_argument("--seed", type=int, help="fix the randomness so a run can be repeated exactly")
     parser.add_argument("--runs", type=int, default=1, help="run many simulations and show how often each outcome happens")
     parser.add_argument("--agent", choices=["rules", "ai"], default="rules",
@@ -52,11 +48,13 @@ def main() -> None:
     args = parser.parse_args()
 
     video, audience = load_example(args.example)
+    if args.audience:
+        audience = load_audience(args.audience)
     seed = args.seed if args.seed is not None else random.randrange(10_000)
 
     if args.agent == "ai":
-        if not (os.environ.get("ANTHROPIC_API_KEY") or os.environ.get("ANTHROPIC_AUTH_TOKEN")):
-            sys.exit("No Claude API key found. Copy backend/.env.example to backend/.env and paste your key into it.")
+        if not has_api_key():
+            sys.exit(MISSING_KEY)
         if not args.yes and not confirm_cost(args.model, video, args.runs):
             print("Cancelled. Nothing was spent.")
             return
@@ -71,7 +69,7 @@ def main() -> None:
             all_results = [run_cascade(video, audience, agent, seed + i) for i in range(args.runs)]
             print_many_runs(video, all_results)
     except anthropic.AuthenticationError:
-        sys.exit("Claude rejected the API key. Check the key in backend/.env.")
+        sys.exit(BAD_KEY)
 
     if args.agent == "ai":
         print(agent.usage.summary())

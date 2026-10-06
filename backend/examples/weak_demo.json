@@ -1,9 +1,5 @@
 {
-  "audience": {
-    "interests": ["productivity", "ai", "startups"],
-    "min_age": 22,
-    "max_age": 35
-  },
+  "audience": "indie_founders.audience.json",
   "video": {
     "title": "Introducing TaskFlow 2.0",
     "hook": "A spinning animated TaskFlow logo on a white background with upbeat stock music.",

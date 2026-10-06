@@ -4,7 +4,7 @@ A dataclass is a tidy container for related values. Defining them all in
 one place makes it clear what every other file expects to receive.
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 
 @dataclass
@@ -27,12 +27,31 @@ class VideoBrief:
 
 
 @dataclass
+class Archetype:
+    """A template for a kind of person, like "bootstrapped SaaS founder".
+    Many personas are made from one archetype, each with small random differences."""
+
+    label: str
+    age: int
+    occupation: str
+    location: str
+    interests: list[str]
+    bio: str  # a sentence or two about their life and how they use Instagram
+    pickiness: float
+    share_tendency: float
+    attention_span: int
+
+
+@dataclass
 class Audience:
     """Who the video was made for."""
 
     interests: list[str]
     min_age: int
     max_age: int
+    description: str = ""  # in plain English
+    # field(default_factory=list) gives every Audience its own new empty list.
+    archetypes: list[Archetype] = field(default_factory=list)
 
 
 @dataclass
@@ -46,6 +65,10 @@ class Persona:
     pickiness: float  # 0-1: how hard they are to impress
     share_tendency: float  # 0-1: how often they send reels to friends
     attention_span: int  # seconds before they get restless
+    occupation: str = ""
+    location: str = ""
+    bio: str = ""
+    moment: str = ""  # what they're doing while scrolling, like "on the bus"
 
 
 @dataclass

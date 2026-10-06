@@ -21,13 +21,13 @@ see who engaged, and learn what to fix before you publish.
 ## Example
 
 <p align="center">
-  <img src="docs/images/report.svg" alt="Simulation report for a demo video: four waves, a STRONG verdict, a segment breakdown and engagement signals." width="100%">
+  <img src="docs/images/report.svg" alt="Simulation report for a demo video: a video passing all four waves (VIRAL), with a segment breakdown, engagement signals and sample viewers." width="100%">
 </p>
 
 One run is one possible future, so run it many times to see the odds:
 
 <p align="center">
-  <img src="docs/images/odds.svg" alt="Over 200 simulations, a weak demo flops 99% of the time while a strong demo is strong or viral 84% of the time." width="100%">
+  <img src="docs/images/odds.svg" alt="Over 200 simulations, a weak demo flops 99% of the time while a strong demo is strong or viral 64% of the time." width="100%">
 </p>
 
 ## Quick start
@@ -39,6 +39,7 @@ cd backend
 uv run run.py examples/good_demo.json            # one simulation
 uv run run.py examples/weak_demo.json --runs 200 # the odds
 uv run run.py examples/good_demo.json --agent ai # AI personas played by Claude
+uv run build_audience.py "who it's for" --out examples/mine.audience.json
 uv run pytest                                    # run the tests
 ```
 
@@ -54,7 +55,7 @@ docs/       Step-by-step lessons and README images
 
 - [x] **Phase 1:** Simulation engine with rule-based agents
 - [x] **Phase 2:** AI personas (Claude) that decide and write comments
-- [ ] **Phase 3:** Persona generator from a plain-English audience description
+- [x] **Phase 3:** Realistic personas and an audience builder from a plain-English description
 - [ ] **Phase 4:** Video understanding (frames, transcript, vision model)
 - [ ] **Phase 5:** API and web app with a live view of the cascade
 - [ ] **Phase 6:** Calibration against real results, A/B testing

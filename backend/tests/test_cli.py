@@ -27,3 +27,20 @@ def test_many_runs_prints_outcome_odds():
     output = run_cli("examples/weak_demo.json", "--runs", "20", "--seed", "0")
     assert "(20 simulations)" in output
     assert "FLOP" in output and "VIRAL" in output
+
+
+def test_audience_can_be_swapped(tmp_path):
+    other = tmp_path / "gamers.audience.json"
+    other.write_text('{"interests": ["gaming", "memes"], "min_age": 14, "max_age": 24}')
+    output = run_cli("examples/good_demo.json", "--seed", "1", "--audience", str(other))
+    assert "Verdict:" in output
+
+
+def test_building_an_audience_needs_a_key():
+    # Blank keys on purpose: .env never overrides a variable that's already set, so even with
+    # your real key in backend/.env this test can't reach Claude or spend money.
+    no_key = {"PATH": "/usr/bin:/bin", "ANTHROPIC_API_KEY": "", "ANTHROPIC_AUTH_TOKEN": ""}
+    result = subprocess.run([sys.executable, "build_audience.py", "indie founders", "--out", "x.json"],
+                            cwd=BACKEND, capture_output=True, text=True, env=no_key)
+    assert result.returncode != 0
+    assert "No Claude API key found" in result.stderr

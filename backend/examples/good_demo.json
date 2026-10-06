@@ -1,9 +1,5 @@
 {
-  "audience": {
-    "interests": ["productivity", "ai", "startups"],
-    "min_age": 22,
-    "max_age": 35
-  },
+  "audience": "indie_founders.audience.json",
   "video": {
     "title": "I cleared 4,212 unread emails in 30 seconds",
     "hook": "A phone screen shows an inbox counter reading 4,212 unread, and the number starts dropping fast while a voice says: \"watch this\".",
