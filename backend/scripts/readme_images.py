@@ -27,19 +27,20 @@ SANS = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-se
 
 # ---------- Terminal screenshots ----------
 
-def run_cli(*args: str) -> str:
-    result = subprocess.run([sys.executable, "run.py", *args], cwd=BACKEND, capture_output=True, text=True, check=True)
+def run_cli(command: str) -> str:
+    """Run one of the backend's commands, like "run.py examples/good_demo.json --seed 7"."""
+    result = subprocess.run([sys.executable, *command.split()], cwd=BACKEND, capture_output=True, text=True, check=True)
     return result.stdout.strip("\n")
 
 
 def line_color(line: str) -> str:
-    if line.startswith("$") or line.startswith("Wave "):
+    if line.startswith(("$", "Wave ", "'Breaks out'")) or line.strip().startswith("Version"):
         return DIM
     if line.startswith("VIRALYST"):
         return BLUE
-    if "stop (needs" in line or "FLOP" in line or "#1 problem" in line:
+    if "stop (needs" in line or "FLOP" in line or "#1 problem" in line or "Too close" in line:
         return RED
-    if "push (needs" in line or "VIRAL" in line or "STRONG" in line:
+    if "push (needs" in line or "VIRAL" in line or "STRONG" in line or "is better" in line:
         return GREEN
     return TEXT
 
@@ -47,8 +48,8 @@ def line_color(line: str) -> str:
 def terminal_svg(commands: list[str]) -> str:
     lines = []
     for command in commands:
-        lines.append(f"$ uv run run.py {command}")
-        lines.extend(run_cli(*command.split()).splitlines())
+        lines.append(f"$ uv run {command}")
+        lines.extend(run_cli(command).splitlines())
         lines.append("")
     lines.pop()
 
@@ -148,9 +149,10 @@ def main() -> None:
     IMAGES.mkdir(parents=True, exist_ok=True)
     images = {
         "how-it-works.svg": cascade_svg(),
-        "report.svg": terminal_svg(["examples/good_demo.json --seed 7"]),
-        "odds.svg": terminal_svg(["examples/weak_demo.json --runs 200 --seed 0",
-                                  "examples/good_demo.json --runs 200 --seed 0"]),
+        "report.svg": terminal_svg(["run.py examples/good_demo.json --seed 7"]),
+        "odds.svg": terminal_svg(["run.py examples/weak_demo.json --runs 200 --seed 0",
+                                  "run.py examples/good_demo.json --runs 200 --seed 0"]),
+        "ab-test.svg": terminal_svg(["compare.py examples/typical_reel.json examples/good_demo.json"]),
     }
     for name, svg in images.items():
         (IMAGES / name).write_text(svg + "\n")

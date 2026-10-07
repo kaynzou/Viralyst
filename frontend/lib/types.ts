@@ -99,7 +99,12 @@ export type ErrorEvent = { type: "error"; message: string };
 
 export type SimulationEvent = StartEvent | WaveEvent | DoneEvent | ErrorEvent;
 
-export type Odds = { runs: number; outcomes: { stage: number; label: string; share: number }[] };
+export type Odds = {
+  runs: number;
+  outcomes: { stage: number; label: string; share: number }[];
+  // Only present once you've calibrated against your real results (backend/calibration/README.md).
+  calibration: { views_per_follower: number; videos: number; typical_miss: number } | null;
+};
 
 export type AnalyzeResult = {
   id: string;
@@ -108,3 +113,18 @@ export type AnalyzeResult = {
   analysis: Analysis;
   cost: number;
 };
+
+export type CompareArm = {
+  name: string;
+  video: string;
+  title: string;
+  mean_stage: number;
+  breakout_rate: number;
+  breakout_low: number;
+  breakout_high: number;
+  odds: { stage: number; label: string; share: number }[];
+};
+
+export type Comparison = { challenger: string; difference: number; low: number; high: number; verdict: string };
+
+export type CompareResult = { runs: number; arms: CompareArm[]; comparisons: Comparison[] };

@@ -1,0 +1,14 @@
+{
+  "audience": "indie_founders.audience.json",
+  "video": {
+    "title": "My weekly planning setup with Notion AI",
+    "hook": "The creator, sitting at a desk, says \"here's how I plan my week with AI\" while a Notion page fades in.",
+    "description": "A calm walkthrough of a weekly planning template in Notion: a task database, a calendar view, and Notion AI summarising the week, explained with a voiceover and simple captions. Clear and pleasant, but similar to many other productivity videos. Ends with \"template link in bio\".",
+    "topics": ["productivity", "ai"],
+    "length_seconds": 35,
+    "hook_strength": 0.5,
+    "quality": 0.5,
+    "shareability": 0.5,
+    "save_value": 0.5
+  }
+}

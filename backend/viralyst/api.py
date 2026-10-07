@@ -23,7 +23,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 
 from .agent import MockAgent
+from .calibration import load_model
 from .claude import BAD_KEY, DEFAULT_MODEL, MISSING_KEY, PRICES, has_api_key
+from .experiments import compare, run_arm
 from .llm_agent import LLMAgent, estimate_cost
 from .loading import load_audience, load_example
 from .media import MissingFFmpeg, require_ffmpeg
@@ -105,7 +107,7 @@ def wave_json(result: WaveResult) -> dict:
 def done_json(results: list[WaveResult], agent) -> dict:
     reactions = all_reactions(results)
     stage = furthest_stage(results)
-    strengths = signals(reactions)
+    strengths = signals(reactions, results[0].benchmarks)
     worst = weakest(strengths)
     usage = getattr(agent, "usage", None)  # only the AI agent has one
     return {
@@ -203,8 +205,39 @@ def odds(video: str, audience: str | None = None, runs: int = Query(200, ge=10, 
     brief, crowd_audience = load_video(video, audience)
     agent = MockAgent()
     all_results = [run_cascade(brief, crowd_audience, agent, seed + i) for i in range(runs)]
-    return {"runs": runs, "outcomes": [{"stage": stage, "label": STAGES[stage], "share": share}
-                                       for stage, share in outcome_odds(all_results).items()]}
+    model = load_model()
+    calibration = None
+    if model and model.agent == "rules":  # these odds come from the rules personas
+        mean_stage = sum(furthest_stage(results) for results in all_results) / runs
+        calibration = {"views_per_follower": model.views_per_follower(mean_stage), "videos": model.videos,
+                       "typical_miss": model.typical_miss}
+    return {"runs": runs, "calibration": calibration,
+            "outcomes": [{"stage": stage, "label": STAGES[stage], "share": share}
+                         for stage, share in outcome_odds(all_results).items()]}
+
+
+@app.get("/api/compare")
+def compare_videos(videos: list[str] = Query(...), audience: str | None = None,
+                   runs: int = Query(200, ge=10, le=1000), seed: int = 0) -> dict:
+    """A/B test with free (rules-based) personas. The first video is the baseline."""
+    if not 2 <= len(videos) <= 6:
+        raise HTTPException(400, "Compare between two and six videos.")
+    first, shared_audience = load_video(videos[0], audience)
+    briefs = [first] + [load_video(video_id)[0] for video_id in videos[1:]]  # all on the same audience
+
+    agent = MockAgent()
+    arms = [run_arm(chr(ord("A") + i), brief, shared_audience, agent, runs, seed) for i, brief in enumerate(briefs)]
+    return {
+        "runs": runs,
+        "arms": [{
+            "name": arm.name, "video": video_id, "title": arm.title, "mean_stage": arm.mean_stage,
+            "breakout_rate": arm.breakout_rate, "breakout_low": arm.breakout_range[0], "breakout_high": arm.breakout_range[1],
+            "odds": [{"stage": stage, "label": STAGES[stage], "share": share} for stage, share in arm.odds.items()],
+        } for arm, video_id in zip(arms, videos)],
+        "comparisons": [{
+            "challenger": c.challenger.name, "difference": c.difference, "low": c.low, "high": c.high, "verdict": c.verdict,
+        } for c in (compare(arms[0], challenger) for challenger in arms[1:])],
+    }
 
 
 def claude_client():

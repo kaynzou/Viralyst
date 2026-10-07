@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { API_URL, getEstimate, getExamples, getStatus, streamSimulation } from "@/lib/api";
 import type { AnalyzeResult, DoneEvent, Examples, Reaction, StartEvent, Status, WaveEvent } from "@/lib/types";
 import Cascade from "./Cascade";
+import ComparePanel from "./ComparePanel";
 import OddsPanel from "./OddsPanel";
 import PersonaCard from "./PersonaCard";
 import Report from "./Report";
@@ -263,6 +264,9 @@ export default function Simulator() {
               </>
             )}
             {videoId && <OddsPanel video={videoId} audience={audienceId} />}
+            {videoId && examples.videos.length > 1 && (
+              <ComparePanel key={videoId} videos={examples.videos} audience={audienceId} current={videoId} />
+            )}
             <UploadPanel status={status} audience={audienceId} onAnalyzed={onAnalyzed} />
           </section>
         </div>

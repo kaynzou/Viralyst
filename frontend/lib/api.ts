@@ -1,5 +1,5 @@
 // Everything the website asks the Python API. The API runs separately, on port 8000.
-import type { AnalyzeResult, Examples, Odds, SimulationEvent, Status } from "./types";
+import type { AnalyzeResult, CompareResult, Examples, Odds, SimulationEvent, Status } from "./types";
 
 export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
@@ -16,6 +16,14 @@ export const getEstimate = (video: string, model: string) =>
   getJson<{ max_calls: number; max_cost: number }>("/api/estimate", { video, model });
 export const getOdds = (video: string, audience: string, runs = 200) =>
   getJson<Odds>("/api/odds", { video, audience, runs: String(runs) });
+
+export async function getComparison(videos: string[], audience: string, runs = 200): Promise<CompareResult> {
+  const params = new URLSearchParams({ audience, runs: String(runs) });
+  for (const video of videos) params.append("videos", video); // the same name repeated = a list
+  const response = await fetch(`${API_URL}/api/compare?${params}`);
+  if (!response.ok) throw new Error((await response.json()).detail ?? `Request failed (${response.status})`);
+  return response.json();
+}
 
 export async function analyzeVideo(file: File, caption: string, audience: string): Promise<AnalyzeResult> {
   // FormData is how browsers send files: like a form with an attachment.

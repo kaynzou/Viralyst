@@ -48,8 +48,17 @@ transcribes the voiceover with Whisper, both on your machine. Claude then turns 
 One run is one possible future, so run it many times to see the odds:
 
 <p align="center">
-  <img src="docs/images/odds.svg" alt="Over 200 simulations, a weak demo flops 99% of the time while a strong demo is strong or viral 64% of the time." width="100%">
+  <img src="docs/images/odds.svg" alt="Over 200 simulations, a weak demo flops 99% of the time while a strong demo is strong or viral 93% of the time." width="100%">
 </p>
+
+## Compare versions (A/B test)
+
+<p align="center">
+  <img src="docs/images/ab-test.svg" alt="A/B test of 200 simulations per version: an ordinary Notion walkthrough breaks out 2% of the time, the strong demo 93%. B is better by 91 points, with a 95% range of 86 to 94." width="100%">
+</p>
+
+Every version meets the same simulated people. Viralyst reports how sure it is and says
+"too close to call" when the difference could be luck.
 
 ## Quick start
 
@@ -70,6 +79,8 @@ uv run run.py examples/weak_demo.json --runs 200 # the odds
 uv run run.py examples/good_demo.json --agent ai # AI personas played by Claude
 uv run build_audience.py "who it's for" --out examples/mine.audience.json
 uv run analyze_video.py examples/sample_demo.mp4 --out examples/sample_demo.json --voiceover
+uv run compare.py examples/typical_reel.json examples/good_demo.json   # A/B test
+uv run calibrate.py calibration/results.csv      # check against your real results
 uv run pytest                                    # run the tests
 ```
 
@@ -89,5 +100,6 @@ dev.sh      Starts the API and the website together
 - [x] **Phase 3:** Realistic personas and an audience builder from a plain-English description
 - [x] **Phase 4:** Video understanding (frames, Whisper transcript, Claude vision, Supertonic voiceover)
 - [x] **Phase 5:** Web API and website with a live view of the cascade
-- [ ] **Phase 6:** Calibration against real results, A/B testing
+- [x] **Phase 6:** A/B tests, measured benchmarks, and calibration against real results
+  (the tools are ready; calibration waits for real data in `backend/calibration/results.csv`)
 - [ ] **Phase 7:** Deploy

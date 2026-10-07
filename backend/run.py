@@ -15,12 +15,14 @@ import anthropic
 from dotenv import load_dotenv
 
 from viralyst.agent import MockAgent
+from viralyst.calibration import load_model
 from viralyst.claude import BAD_KEY, DEFAULT_MODEL, MISSING_KEY, PRICES, has_api_key
 from viralyst.llm_agent import CACHE_DIR, LLMAgent, estimate_cost
 from viralyst.loading import load_audience, load_example
 from viralyst.models import VideoBrief
 from viralyst.report import print_many_runs, print_report
 from viralyst.simulation import WAVES, run_cascade
+from viralyst.summary import furthest_stage
 
 
 def confirm_cost(model: str, video: VideoBrief, runs: int) -> bool:
@@ -29,6 +31,20 @@ def confirm_cost(model: str, video: VideoBrief, runs: int) -> bool:
     print(f"Estimated cost: up to ${estimate_cost(model, video, calls):.2f}. Videos that stop early cost less,")
     print("and answers already saved on disk are free.")
     return input("Continue? [y/N] ").strip().lower() in ("y", "yes")
+
+
+def print_calibrated_views(all_results: list, followers: int | None, agent_name: str) -> None:
+    """With a calibration (see calibration/README.md), turn the odds into an estimate of real views."""
+    model = load_model()
+    if not model or model.agent != agent_name:
+        if followers:
+            print("No calibration for these personas yet, so no view estimate. See calibration/README.md.")
+        return
+    mean_stage = sum(furthest_stage(results) for results in all_results) / len(all_results)
+    line = f"Calibrated on {model.videos} of your real videos: about {model.views_per_follower(mean_stage):.1f}x your follower count"
+    if followers:
+        line += f", so roughly {model.expected_views(mean_stage, followers):,.0f} views with {followers:,} followers"
+    print(f"{line} (usually within {model.typical_miss:.1f}x).\n")
 
 
 def main() -> None:
@@ -45,6 +61,7 @@ def main() -> None:
     parser.add_argument("--yes", action="store_true", help="skip the cost confirmation")
     parser.add_argument("--fresh", action="store_true", help="ask Claude again instead of reusing saved answers")
     parser.add_argument("--workers", type=int, default=8, help="how many AI personas to ask at the same time")
+    parser.add_argument("--followers", type=int, help="your follower count, to estimate real views (needs calibration)")
     args = parser.parse_args()
 
     video, audience = load_example(args.example)
@@ -68,6 +85,7 @@ def main() -> None:
         else:
             all_results = [run_cascade(video, audience, agent, seed + i) for i in range(args.runs)]
             print_many_runs(video, all_results)
+            print_calibrated_views(all_results, args.followers, "rules" if args.agent == "rules" else args.model)
     except anthropic.AuthenticationError:
         sys.exit(BAD_KEY)
 

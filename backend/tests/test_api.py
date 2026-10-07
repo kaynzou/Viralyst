@@ -10,6 +10,9 @@ import pytest
 from fastapi.testclient import TestClient
 
 from viralyst import api
+from viralyst.agent import MockAgent
+from viralyst.loading import load_example
+from viralyst.simulation import run_cascade
 from viralyst.video_analyzer import VideoAnalysis
 
 client = TestClient(api.app)
@@ -49,7 +52,10 @@ def test_a_simulation_streams_start_waves_and_done():
     events = read_events(response)
     assert [e["type"] for e in events] == ["start", "wave", "wave", "wave", "wave", "done"]
     assert len(events[1]["reactions"]) == 30
-    assert events[1]["score"] == pytest.approx(2.19, abs=0.01)  # same as the terminal report for seed 7
+    # The stream must match the engine exactly: same seed, same scores as the terminal report.
+    video, audience = load_example(api.EXAMPLES / "good_demo.json")
+    expected = run_cascade(video, audience, MockAgent(), seed=7)
+    assert [e["score"] for e in events[1:5]] == pytest.approx([w.score for w in expected])
     assert events[-1]["verdict"].startswith("VIRAL")
     assert events[-1]["usage"] is None  # the free agent spends nothing
 

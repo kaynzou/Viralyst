@@ -94,6 +94,10 @@ AI. Fewer people are a perfect match, so it's harder to break out.
 Every simulation is built on assumptions like this. Being able to say *which* assumption moved the
 result is what makes a simulation trustworthy.
 
+> **Update from Lesson 6:** part of that drop had a second cause. The "typical reel" yardstick was still
+> the one measured in Phase 1, before audiences became realistic, so it was too strict. Re-measuring it
+> put the good demo at 93% strong-or-viral. Both effects were real, and only measuring separated them.
+
 ## Python you used in this phase
 
 - **`field(default_factory=list)`:** a dataclass default that's a list must be made fresh for each object.

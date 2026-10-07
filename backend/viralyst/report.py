@@ -20,7 +20,7 @@ def print_report(video: VideoBrief, results: list[WaveResult], seed: int) -> Non
     print()
     print_segments(reactions)
     print()
-    print_signals(reactions)
+    print_signals(reactions, results[0].benchmarks)
     print()
     print_sample_viewers(results[0].reactions)
     print()
@@ -52,8 +52,8 @@ def print_segments(reactions: list[Reaction]) -> None:
                   f"liked {group['like']:.0%}   shared {group['share']:.1%}")
 
 
-def print_signals(reactions: list[Reaction]) -> None:
-    strengths = signals(reactions)
+def print_signals(reactions: list[Reaction], benchmarks: dict[str, float] | None = None) -> None:
+    strengths = signals(reactions, benchmarks)
     print("Signals compared with a typical reel (1.0x = typical):")
     for signal in WEIGHTS:
         bar = "#" * round(strengths[signal] * 10)

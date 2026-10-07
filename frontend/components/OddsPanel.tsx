@@ -54,6 +54,13 @@ export default function OddsPanel({ video, audience }: { video: string; audience
           ))}
         </div>
       )}
+      {odds && !stale && odds.calibration && (
+        <p className="mt-3 text-sm">
+          Calibrated on {odds.calibration.videos} of your real videos: expect about{" "}
+          <span className="font-medium">{odds.calibration.views_per_follower.toFixed(1)}× your follower count</span> in views
+          (usually within {odds.calibration.typical_miss.toFixed(1)}×).
+        </p>
+      )}
       {stale && <p className="mt-3 text-sm text-muted">You changed the video or audience. Run again to update.</p>}
     </div>
   );

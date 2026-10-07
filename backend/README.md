@@ -13,6 +13,9 @@ uv run build_audience.py "who it's for" --out examples/mine.audience.json
 uv run analyze_video.py examples/sample_demo.mp4 --out examples/sample_demo.json --voiceover
 uv run scripts/make_sample_video.py              # redraw the sample video (macOS)
 uv run scripts/readme_demo.py                    # redraw the Phase 4 demo GIF
+uv run compare.py examples/weak_demo.json examples/good_demo.json   # A/B test
+uv run measure_benchmarks.py --agent rules       # re-measure the "typical reel" (free)
+uv run calibrate.py calibration/results.csv      # check predictions against real results
 uv run pytest                                    # run the tests
 uv run scripts/readme_images.py                  # redraw the README images
 ```
@@ -24,6 +27,9 @@ uv run scripts/readme_images.py                  # redraw the README images
 | `run.py` | Command-line entry point: run a simulation |
 | `build_audience.py` | Command-line entry point: create an audience file with Claude |
 | `analyze_video.py` | Command-line entry point: turn a video file into a video brief |
+| `compare.py` | Command-line entry point: A/B test two or more versions of a video |
+| `measure_benchmarks.py` | Command-line entry point: measure the "typical reel" for a kind of persona |
+| `calibrate.py` | Command-line entry point: compare predictions with your real Instagram results |
 | `viralyst/models.py` | Data shapes: VideoBrief, Audience, Archetype, Persona, Reaction, Wave |
 | `viralyst/personas.py` | Builds crowds of people from archetypes, with small random differences |
 | `viralyst/audience_builder.py` | Turns a plain-English audience description into archetypes |
@@ -39,10 +45,14 @@ uv run scripts/readme_images.py                  # redraw the README images
 | `viralyst/speech.py` | Speech-to-text with Whisper (runs locally) |
 | `viralyst/video_analyzer.py` | Claude looks at frames and transcript and writes the video brief |
 | `viralyst/voiceover.py` | Text-to-speech with Supertonic (runs locally) |
+| `viralyst/experiments.py` | A/B tests: breakout rates, 95% ranges, "too close to call" |
+| `viralyst/benchmarks.py` | Measures and stores "typical reel" benchmarks per model |
+| `viralyst/calibration.py` | Fits simulated stages to real views: rank correlation, line, leave-one-out check |
 | `viralyst/claude.py` | Shared Claude helpers: models, prices, cost tracking |
 | `viralyst/loading.py` | Reads and writes video and audience JSON files |
 | `viralyst/data/` | Everyday Instagram users outside your audience |
 | `examples/` | Sample video briefs, a sample video file and the audience they're aimed at |
+| `calibration/` | Your real results, the fitted model and measured benchmarks (see its README) |
 | `tests/` | Automated tests (pytest) |
 | `scripts/` | Developer helpers |
 | `.env.example` | Template for your Claude API key (copy to `.env`) |

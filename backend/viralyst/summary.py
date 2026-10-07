@@ -51,8 +51,8 @@ def segments(reactions: list[Reaction]) -> dict[str, dict]:
     return result
 
 
-def signals(reactions: list[Reaction]) -> dict[str, float]:
-    return signal_strengths(engagement_rates(reactions))
+def signals(reactions: list[Reaction], benchmarks: dict[str, float] | None = None) -> dict[str, float]:
+    return signal_strengths(engagement_rates(reactions), benchmarks)
 
 
 def weakest(strengths: dict[str, float]) -> str:

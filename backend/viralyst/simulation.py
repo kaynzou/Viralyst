@@ -28,6 +28,7 @@ def simulate(video: VideoBrief, audience: Audience, agent, seed: int | None = No
     # One random generator, created from a seed, drives every dice roll.
     # Same seed -> same personas and same reactions -> same result.
     rng = random.Random(seed)
+    benchmarks = getattr(agent, "benchmarks", None)  # only AI personas with measured benchmarks have these
 
     for number, wave in enumerate(WAVES, start=1):
         crowd = make_crowd(rng, audience, wave.size, wave.target_fraction)
@@ -35,7 +36,7 @@ def simulate(video: VideoBrief, audience: Audience, agent, seed: int | None = No
         if not reactions:
             raise RuntimeError(f"No persona in wave {number} produced a reaction, so the wave can't be scored.")
         rates = engagement_rates(reactions)
-        result = WaveResult(number, wave, reactions, rates, score(rates), PUSH_THRESHOLD)
+        result = WaveResult(number, wave, reactions, rates, score(rates, benchmarks), PUSH_THRESHOLD, benchmarks)
         yield result
 
         if not result.passed:

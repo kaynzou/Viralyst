@@ -107,6 +107,7 @@ class WaveResult:
     rates: dict[str, float]
     score: float
     threshold: float
+    benchmarks: dict[str, float] | None = None  # the "typical reel" it was scored against (None = the default)
 
     @property
     def passed(self) -> bool:

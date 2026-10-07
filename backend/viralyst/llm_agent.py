@@ -14,6 +14,7 @@ from pathlib import Path
 import anthropic
 from pydantic import BaseModel
 
+from . import benchmarks
 from .claude import DEFAULT_MODEL, PRICES, Usage, fallback_options
 from .models import Persona, Reaction, VideoBrief
 
@@ -165,6 +166,8 @@ class LLMAgent:
         # and automatically retries rate limits and temporary server errors.
         self.client = client or anthropic.Anthropic(max_retries=6)
         self.usage = Usage(PRICES[model])
+        # This model's measured "typical reel" (see measure_benchmarks.py), or None to use the default.
+        self.benchmarks = benchmarks.load(model)
 
     def react_wave(self, crowd: list[Persona], video: VideoBrief, rng=None) -> list[Reaction]:
         print(f"  Asking {len(crowd)} AI personas...", end="", file=sys.stderr, flush=True)
