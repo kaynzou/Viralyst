@@ -9,7 +9,8 @@ import pytest
 
 from viralyst.llm_agent import Decision, LLMAgent, describe_persona, estimate_cost, model_options
 from viralyst.personas import make_crowd
-from viralyst.simulation import furthest_stage, run_cascade
+from viralyst.simulation import run_cascade
+from viralyst.summary import furthest_stage
 
 LOVED_IT = Decision(first_impression="wait what, 4000 emails??", keeps_watching=True, seconds_watched=14,
                     liked=True, commented=True, comment="  need this for my inbox  ", shared=True, saved=True, followed=False)

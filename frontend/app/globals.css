@@ -1,0 +1,73 @@
+@import "tailwindcss";
+
+/* Colors as variables, so light and dark mode only need different values, not different code. */
+:root {
+  --bg: #f6f6f7;
+  --panel: #ffffff;
+  --border: #e4e4e7;
+  --text: #18181b;
+  --muted: #6b6b76;
+  --accent: #2563eb;
+  --on-accent: #ffffff; /* text on top of the accent color */
+  --good: #15803d;
+  --warn: #b45309;
+  --bad: #dc2626;
+  --like: #db2777;
+  --comment: #7c3aed;
+  --idle: #d4d4d8;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0c0c10;
+    --panel: #16161d;
+    --border: #2a2a34;
+    --text: #f4f4f5;
+    --muted: #a1a1aa;
+    --accent: #60a5fa;
+    --on-accent: #0b1220;
+    --good: #4ade80;
+    --warn: #fbbf24;
+    --bad: #f87171;
+    --like: #f472b6;
+    --comment: #a78bfa;
+    --idle: #3f3f46;
+  }
+}
+
+/* Makes Tailwind classes like bg-panel, text-muted and border-border use the variables above. */
+@theme inline {
+  --color-bg: var(--bg);
+  --color-panel: var(--panel);
+  --color-border: var(--border);
+  --color-text: var(--text);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-on-accent: var(--on-accent);
+  --color-good: var(--good);
+  --color-warn: var(--warn);
+  --color-bad: var(--bad);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* Each persona's dot "pops" in. */
+@keyframes pop {
+  from { transform: scale(0); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+.dot {
+  animation: pop 0.25s ease-out both;
+}
+
+/* People who turn off animations in their system settings see the dots straight away. */
+@media (prefers-reduced-motion: reduce) {
+  .dot {
+    animation: none;
+  }
+}

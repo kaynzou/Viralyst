@@ -3,6 +3,7 @@
 The Python simulation engine. Run every command from this folder.
 
 ```bash
+uv run fastapi dev viralyst/api.py                # the web API on http://localhost:8000 (/docs to explore)
 uv run run.py examples/good_demo.json            # one simulation, full report
 uv run run.py examples/good_demo.json --seed 7   # repeat an exact run
 uv run run.py examples/weak_demo.json --runs 200 # how often each outcome happens
@@ -29,8 +30,11 @@ uv run scripts/readme_images.py                  # redraw the README images
 | `viralyst/agent.py` | Rule-based persona: formulas and dice rolls (free) |
 | `viralyst/llm_agent.py` | AI persona: Claude decides and writes comments |
 | `viralyst/algorithm.py` | Scores a wave against a typical reel |
-| `viralyst/simulation.py` | The cascade: wave → score → push or stop |
-| `viralyst/report.py` | Prints the results |
+| `viralyst/simulation.py` | The cascade: wave → score → push or stop, one wave at a time |
+| `viralyst/summary.py` | What a simulation means, as data: verdict, reach, signals, odds |
+| `viralyst/report.py` | Prints the results in the terminal |
+| `viralyst/api.py` | The web API the website uses (FastAPI), with live streaming |
+| `viralyst/pipeline.py` | Video file → frames + transcript → saved brief (used by the CLI and the API) |
 | `viralyst/media.py` | ffmpeg helpers: video facts, frames, audio |
 | `viralyst/speech.py` | Speech-to-text with Whisper (runs locally) |
 | `viralyst/video_analyzer.py` | Claude looks at frames and transcript and writes the video brief |

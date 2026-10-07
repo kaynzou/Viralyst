@@ -14,5 +14,8 @@ uploads/
 .cache/
 *.wav
 
+# Local tool settings
+.claude/
+
 # macOS
 .DS_Store

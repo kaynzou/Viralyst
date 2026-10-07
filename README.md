@@ -19,6 +19,16 @@ see who engaged, and learn what to fix before you publish.
    Beat it and the video moves to a bigger, broader wave. Otherwise it stops.
 4. **Read the report:** how far it got, which audiences engaged, and your weakest signal with a fix.
 
+## The website
+
+<p align="center">
+  <img src="docs/images/website.jpg" alt="The Viralyst website: settings on the left, and on the right four waves of dots, one per simulated viewer, colored by what they did, each wave with its score against a typical reel. A selected viewer's card shows a business student in Singapore who watched 63% and shared." width="100%">
+</p>
+
+Watch the audience react wave by wave. Every dot is a simulated viewer: its color shows what they did,
+and you can click it to meet them. Then read the verdict, see the odds over 200 runs, or upload your own
+video. Every run gets a link that reproduces it exactly.
+
 ## From a real video
 
 <p align="center">
@@ -43,7 +53,15 @@ One run is one possible future, so run it many times to see the odds:
 
 ## Quick start
 
-Requires [uv](https://docs.astral.sh/uv/) and [ffmpeg](https://ffmpeg.org) (`brew install ffmpeg`). The AI features also need a [Claude API key](https://console.anthropic.com/settings/keys) in `backend/.env` (see `backend/.env.example`).
+Requires [uv](https://docs.astral.sh/uv/), [Node.js](https://nodejs.org) and [ffmpeg](https://ffmpeg.org) (`brew install ffmpeg`). The AI features also need a [Claude API key](https://console.anthropic.com/settings/keys) in `backend/.env` (see `backend/.env.example`).
+
+Start the website (the API and the web app together), then open http://localhost:3000:
+
+```bash
+./dev.sh
+```
+
+Or use the command line:
 
 ```bash
 cd backend
@@ -58,9 +76,10 @@ uv run pytest                                    # run the tests
 ## Project structure
 
 ```
-backend/    Python simulation engine, CLI and tests
-frontend/   Web app (coming in Phase 5)
+backend/    Python: simulation engine, web API, command-line tools and tests
+frontend/   Next.js website: live cascade, report, odds and video upload
 docs/       Step-by-step lessons and README images
+dev.sh      Starts the API and the website together
 ```
 
 ## Roadmap
@@ -69,6 +88,6 @@ docs/       Step-by-step lessons and README images
 - [x] **Phase 2:** AI personas (Claude) that decide and write comments
 - [x] **Phase 3:** Realistic personas and an audience builder from a plain-English description
 - [x] **Phase 4:** Video understanding (frames, Whisper transcript, Claude vision, Supertonic voiceover)
-- [ ] **Phase 5:** API and web app with a live view of the cascade
+- [x] **Phase 5:** Web API and website with a live view of the cascade
 - [ ] **Phase 6:** Calibration against real results, A/B testing
 - [ ] **Phase 7:** Deploy

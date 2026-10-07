@@ -8,21 +8,17 @@ Then simulate it like any other example:
 """
 
 import argparse
-import json
-import os
 import sys
 import tempfile
-from dataclasses import asdict
-from datetime import date
 from pathlib import Path
 
 import anthropic
 from dotenv import load_dotenv
 
 from viralyst.claude import BAD_KEY, DEFAULT_MODEL, MISSING_KEY, PRICES, has_api_key
-from viralyst.media import MissingFFmpeg, extract_audio, extract_frames, frame_times, probe, require_ffmpeg
-from viralyst.speech import transcribe
-from viralyst.video_analyzer import analyze, estimate_analysis_cost, to_brief
+from viralyst.media import MissingFFmpeg, require_ffmpeg
+from viralyst.pipeline import build_result, prepare, save_result
+from viralyst.video_analyzer import analyze, estimate_analysis_cost
 
 DEFAULT_AUDIENCE = "examples/indie_founders.audience.json"
 
@@ -49,21 +45,17 @@ def main() -> None:
     if not has_api_key():
         sys.exit(MISSING_KEY)
 
-    video = probe(args.video)
-    print(f"Video: {video.duration:.1f}s, {video.width}x{video.height}, {'with' if video.has_audio else 'no'} sound")
-
     with tempfile.TemporaryDirectory() as work:  # a scratch folder that's deleted afterwards
-        frames = extract_frames(video, frame_times(video.duration), Path(work))
-        print(f"Took {len(frames)} frames ({sum(t < 3 for t, _ in frames)} from the first 3 seconds)")
-
-        transcript = None
-        if video.has_audio:
-            print("Listening with Whisper (the first run downloads its model, about 150 MB)...")
-            transcript = transcribe(extract_audio(video, Path(work) / "audio.wav"), args.whisper)
-            print(f"Heard: {transcript.text[:200] or '(no speech)'}")
+        print("Taking frames and listening with Whisper (the first run downloads its model, about 150 MB)...")
+        prepared = prepare(args.video, Path(work), args.whisper)
+        video = prepared.video
+        print(f"Video: {video.duration:.1f}s, {video.width}x{video.height}, {'with' if video.has_audio else 'no'} sound")
+        print(f"Took {len(prepared.frames)} frames ({sum(t < 3 for t, _ in prepared.frames)} from the first 3 seconds)")
+        if prepared.transcript:
+            print(f"Heard: {prepared.transcript.text[:200] or '(no speech)'}")
 
         if not args.yes:
-            cost = estimate_analysis_cost(args.model, video, len(frames))
+            cost = estimate_analysis_cost(args.model, video, len(prepared.frames))
             print(f"Claude ({args.model}) will look at the frames and transcript. Estimated cost: about ${cost:.2f}.")
             if input("Continue? [y/N] ").strip().lower() not in ("y", "yes"):
                 print("Cancelled. Nothing was spent.")
@@ -71,27 +63,13 @@ def main() -> None:
 
         print("Claude is watching the video...")
         try:
-            analysis, usage = analyze(video, frames, transcript, args.caption, anthropic.Anthropic(max_retries=6), args.model)
+            analysis, usage = analyze(video, prepared.frames, prepared.transcript, args.caption,
+                                      anthropic.Anthropic(max_retries=6), args.model)
         except anthropic.AuthenticationError:
             sys.exit(BAD_KEY)
 
     out = Path(args.out)
-    out.parent.mkdir(parents=True, exist_ok=True)
-    result = {
-        "audience": os.path.relpath(args.audience, out.parent),  # stored relative to the output file
-        "video": asdict(to_brief(analysis, video, args.caption)),
-        "analysis": {
-            "source": str(args.video),
-            "analyzed_on": date.today().isoformat(),
-            "model": args.model,
-            "transcript": transcript.text if transcript else "",
-            "strengths": analysis.strengths,
-            "weaknesses": analysis.weaknesses,
-            "better_hook": analysis.better_hook,
-            "suggested_caption": analysis.suggested_caption,
-        },
-    }
-    out.write_text(json.dumps(result, indent=2, ensure_ascii=False) + "\n")
+    save_result(build_result(prepared, analysis, args.caption, Path(args.audience), out, args.model), out)
 
     print(f"\nSaved the brief to {out}")
     print(f"Hook: {analysis.hook}")

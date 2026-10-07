@@ -5,6 +5,7 @@ audience) than the one before, like going from your followers to the Explore tab
 """
 
 import random
+from collections.abc import Iterator
 
 from .algorithm import PUSH_THRESHOLD, engagement_rates, score
 from .models import Audience, VideoBrief, Wave, WaveResult
@@ -18,11 +19,15 @@ WAVES = [
 ]
 
 
-def run_cascade(video: VideoBrief, audience: Audience, agent, seed: int | None = None) -> list[WaveResult]:
+def simulate(video: VideoBrief, audience: Audience, agent, seed: int | None = None) -> Iterator[WaveResult]:
+    """Run the cascade, handing back each wave the moment it's finished.
+
+    `yield` makes this a generator: whoever loops over it gets wave 1 while wave 2
+    hasn't even started. The website uses this to show waves live.
+    """
     # One random generator, created from a seed, drives every dice roll.
     # Same seed -> same personas and same reactions -> same result.
     rng = random.Random(seed)
-    results = []
 
     for number, wave in enumerate(WAVES, start=1):
         crowd = make_crowd(rng, audience, wave.size, wave.target_fraction)
@@ -31,14 +36,13 @@ def run_cascade(video: VideoBrief, audience: Audience, agent, seed: int | None =
             raise RuntimeError(f"No persona in wave {number} produced a reaction, so the wave can't be scored.")
         rates = engagement_rates(reactions)
         result = WaveResult(number, wave, reactions, rates, score(rates), PUSH_THRESHOLD)
-        results.append(result)
+        yield result
 
         if not result.passed:
-            break  # the algorithm stops showing the video to new people
-
-    return results
+            return  # the algorithm stops showing the video to new people
 
 
-def furthest_stage(results: list[WaveResult]) -> int:
-    """1 = stalled in wave 1 ... 4 = stalled in wave 4, 5 = passed every wave."""
-    return len(results) + (1 if results[-1].passed else 0)
+def run_cascade(video: VideoBrief, audience: Audience, agent, seed: int | None = None) -> list[WaveResult]:
+    """Run the whole cascade and return every wave at once."""
+    return list(simulate(video, audience, agent, seed))
+
