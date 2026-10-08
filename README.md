@@ -6,6 +6,8 @@ Viralyst simulates an audience of personas, inside and outside your target marke
 Instagram-style algorithm that decides how far your video spreads. Get the odds of it taking off,
 see who engaged, and learn what to fix before you publish.
 
+**[Try it live →](https://viralyst-eosin.vercel.app)** The free server sleeps when unused, so the first visit can take about a minute to wake up.
+
 <p align="center">
   <img src="docs/images/how-it-works.svg" alt="A video brief goes to wave 1 (your followers). Each wave that scores at least 1.0 unlocks a bigger wave with more strangers, up to the broad Reels audience, and then a report." width="100%">
 </p>
@@ -109,5 +111,5 @@ dev.sh      Starts the API and the website together
 - [x] **Phase 5:** Web API and website with a live view of the cascade
 - [x] **Phase 6:** A/B tests, measured benchmarks, and calibration against real results
   (the tools are ready; calibration waits for real data in `backend/calibration/results.csv`)
-- [x] **Phase 7:** Ready to deploy on Vercel + Render: container, access code and daily budget
-  (go live by following `deploy/README.md`)
+- [x] **Phase 7:** Live on Vercel + Render, with an access code and a daily budget for AI features
+  ([deploy your own](deploy/README.md))
