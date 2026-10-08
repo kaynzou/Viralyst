@@ -84,12 +84,20 @@ uv run calibrate.py calibration/results.csv      # check against your real resul
 uv run pytest                                    # run the tests
 ```
 
+## Deploy your own
+
+The website runs on Vercel and the API on Hugging Face Spaces, both free. A GitHub Action redeploys the
+API on every push. AI features are locked behind an access code and a daily budget, so visitors can't
+spend your credits. Follow the step-by-step guide in [`deploy/README.md`](deploy/README.md).
+
 ## Project structure
 
 ```
 backend/    Python: simulation engine, web API, command-line tools and tests
 frontend/   Next.js website: live cascade, report, odds and video upload
 docs/       Step-by-step lessons and README images
+deploy/     How to put Viralyst online (Vercel + Hugging Face Spaces)
+.github/    The GitHub Action that deploys the API
 dev.sh      Starts the API and the website together
 ```
 
@@ -102,4 +110,5 @@ dev.sh      Starts the API and the website together
 - [x] **Phase 5:** Web API and website with a live view of the cascade
 - [x] **Phase 6:** A/B tests, measured benchmarks, and calibration against real results
   (the tools are ready; calibration waits for real data in `backend/calibration/results.csv`)
-- [ ] **Phase 7:** Deploy
+- [x] **Phase 7:** Ready to deploy: container, auto-deploy, access code and daily budget
+  (go live by following `deploy/README.md`)

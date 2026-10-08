@@ -1,0 +1,9 @@
+# Things that must never go into the container: local-only files and secrets.
+.venv
+.cache
+.pytest_cache
+__pycache__
+uploads
+tests
+*.wav
+.env

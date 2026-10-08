@@ -3,7 +3,10 @@
 export type Signal = "watch" | "share" | "save" | "comment" | "like" | "follow";
 
 export type Status = {
-  ai_available: boolean;
+  ai_available: boolean; // the server has a Claude API key
+  ai_locked: boolean; // the server wants an access code for AI features
+  ai_unlocked: boolean; // ...and this browser sent the right one (always true locally)
+  budget: { limit: number | null; spent_today: number } | null;
   ffmpeg_available: boolean;
   models: string[];
   default_model: string;

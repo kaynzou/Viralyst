@@ -48,6 +48,7 @@ uv run scripts/readme_images.py                  # redraw the README images
 | `viralyst/experiments.py` | A/B tests: breakout rates, 95% ranges, "too close to call" |
 | `viralyst/benchmarks.py` | Measures and stores "typical reel" benchmarks per model |
 | `viralyst/calibration.py` | Fits simulated stages to real views: rank correlation, line, leave-one-out check |
+| `viralyst/settings.py` | Online settings: allowed websites, access code, daily AI budget |
 | `viralyst/claude.py` | Shared Claude helpers: models, prices, cost tracking |
 | `viralyst/loading.py` | Reads and writes video and audience JSON files |
 | `viralyst/data/` | Everyday Instagram users outside your audience |
@@ -56,3 +57,4 @@ uv run scripts/readme_images.py                  # redraw the README images
 | `tests/` | Automated tests (pytest) |
 | `scripts/` | Developer helpers |
 | `.env.example` | Template for your Claude API key (copy to `.env`) |
+| `Dockerfile` | The recipe for the API's container (used by Hugging Face Spaces) |

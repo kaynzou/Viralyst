@@ -21,6 +21,8 @@ npm run dev      # http://localhost:3000 (needs the API running on port 8000)
 | `components/Report.tsx` | Verdict, signals, who engaged, comments, AI cost |
 | `components/OddsPanel.tsx` | 200 free simulations and how often each outcome happens |
 | `components/UploadPanel.tsx` | Upload your own video for analysis (needs an API key) |
+| `components/ComparePanel.tsx` | A/B test two videos |
+| `components/AccessCode.tsx` | Unlock AI features on the live site with your access code |
 | `lib/api.ts` | Every call to the Python API, including the live stream |
 | `lib/types.ts` | The shapes of the data the API sends |
 
@@ -32,4 +34,5 @@ npm run lint       # code style and common mistakes
 npm run build      # a full production build
 ```
 
-The API address defaults to `http://localhost:8000`. Set `NEXT_PUBLIC_API_URL` to change it.
+The API address defaults to `http://localhost:8000`. Set `NEXT_PUBLIC_API_URL` to change it (on Vercel,
+see `../deploy/README.md`). It's built into the site, so redeploy after changing it.

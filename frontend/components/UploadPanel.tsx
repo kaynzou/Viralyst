@@ -15,7 +15,9 @@ export default function UploadPanel({ status, audience, onAnalyzed }: Props) {
 
   const blocked = !status.ai_available
     ? "Add your Claude API key to backend/.env to analyze your own videos. It's picked up automatically, no restart needed."
-    : !status.ffmpeg_available
+    : !status.ai_unlocked
+      ? "Analyzing videos uses AI, which is locked on this site. Unlock it with the access code in the settings."
+      : !status.ffmpeg_available
       ? "Install ffmpeg (brew install ffmpeg) to analyze videos."
       : "";
 

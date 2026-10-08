@@ -4,6 +4,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { API_URL, getEstimate, getExamples, getStatus, streamSimulation } from "@/lib/api";
 import type { AnalyzeResult, DoneEvent, Examples, Reaction, StartEvent, Status, WaveEvent } from "@/lib/types";
+import AccessCode from "./AccessCode";
 import Cascade from "./Cascade";
 import ComparePanel from "./ComparePanel";
 import OddsPanel from "./OddsPanel";
@@ -61,7 +62,7 @@ export default function Simulator() {
     });
   }, []);
 
-  const load = useCallback(async (selectId?: string) => {
+  const load = useCallback(async (selectId?: string): Promise<Status | null> => {
     try {
       const [newStatus, newExamples] = await Promise.all([getStatus(), getExamples()]);
       setStatus(newStatus);
@@ -86,15 +87,17 @@ export default function Simulator() {
             startStream({ video: linked.id, audience, agent: "rules", model: newStatus.default_model,
                           ...(linkedSeed ? { seed: linkedSeed } : {}) });
           }
-          return;
+          return newStatus;
         }
       }
 
       const first = newExamples.videos.find((v) => v.id === selectId) ?? newExamples.videos[0];
       setVideoId((current) => (selectId || !current ? first?.id ?? "" : current));
       setAudienceId((current) => (selectId || !current ? first?.audience ?? newExamples.audiences[0]?.id ?? "" : current));
+      return newStatus;
     } catch {
       setApiDown(true);
+      return null;
     }
   }, [startStream]);
 
@@ -145,6 +148,7 @@ export default function Simulator() {
   }
 
   const video = examples?.videos.find((v) => v.id === videoId);
+  const aiReady = !!status?.ai_available && !!status?.ai_unlocked;
   const allReactions = run.waves.flatMap((w) => w.reactions);
   const finished = run.status === "done" || run.status === "error";
   const showReport = run.done && revealed >= run.waves.length;
@@ -162,8 +166,9 @@ export default function Simulator() {
               <span className="text-good">●</span> API connected
             </span>
             <span className="rounded-full border border-border px-2.5 py-1">
-              {status.ai_available ? <><span className="text-good">●</span> AI features on</>
-                : <><span className="text-muted">○</span> AI features off (no API key)</>}
+              {!status.ai_available ? <><span className="text-muted">○</span> AI features off (no API key)</>
+                : !status.ai_unlocked ? <><span className="text-muted">○</span> AI features locked</>
+                : <><span className="text-good">●</span> AI features on</>}
             </span>
           </div>
         )}
@@ -211,11 +216,18 @@ export default function Simulator() {
                   <input type="radio" checked={agent === "rules"} onChange={() => setAgent("rules")} />
                   Rules: free and instant
                 </label>
-                <label className={`flex items-center gap-2 ${status.ai_available ? "" : "opacity-50"}`}>
-                  <input type="radio" checked={agent === "ai"} disabled={!status.ai_available} onChange={() => setAgent("ai")} />
+                <label className={`flex items-center gap-2 ${aiReady ? "" : "opacity-50"}`}>
+                  <input type="radio" checked={agent === "ai"} disabled={!aiReady} onChange={() => setAgent("ai")} />
                   AI: played by Claude (costs money)
                 </label>
-                {!status.ai_available && <p className="mt-1 text-xs text-muted">Needs a Claude API key in backend/.env.</p>}
+                {!status.ai_available && (
+                  <p className="mt-1 text-xs text-muted">Needs a Claude API key on the server (backend/.env on your computer).</p>
+                )}
+                <AccessCode status={status} recheck={async () => {
+                  const fresh = await load();
+                  if (!fresh?.ai_unlocked) setAgent("rules");
+                  return fresh;
+                }} />
                 {agent === "ai" && (
                   <select value={model} onChange={(e) => setModel(e.target.value)}
                           className="mt-2 w-full rounded-lg border border-border bg-bg px-2 py-1.5">

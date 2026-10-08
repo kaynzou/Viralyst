@@ -71,6 +71,9 @@ data: {"type": "done", "verdict": "VIRAL: ...", ...}
 - **A gotcha:** when the stream ends, `EventSource` automatically *reconnects*, which would start a
   new simulation. So the page closes it itself when it sees `done` or `error`.
 
+> **Update from Lesson 7:** the website now streams with `fetch` instead of `EventSource`, because
+> `EventSource` can't send the access code header. The events are exactly the same.
+
 The rules-based personas finish in milliseconds, so the page reveals waves one at a time on purpose
 (a timer in `Simulator.tsx`). That way you can still watch the cascade.
 

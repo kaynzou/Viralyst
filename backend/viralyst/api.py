@@ -5,12 +5,14 @@
 
 Without an API key everything free still works; the AI endpoints answer with a clear
 "add your key" message instead. A key added to backend/.env is picked up without a restart.
+Online, settings.py adds an access code, a daily budget and the list of allowed websites.
 """
 
 import json
 import random
 import shutil
 import tempfile
+import time
 import uuid
 from dataclasses import asdict
 from pathlib import Path
@@ -18,7 +20,7 @@ from typing import Literal
 
 import anthropic
 from dotenv import load_dotenv
-from fastapi import Depends, FastAPI, File, Form, HTTPException, Query, UploadFile
+from fastapi import Depends, FastAPI, File, Form, Header, HTTPException, Query, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 
@@ -31,6 +33,7 @@ from .loading import load_audience, load_example
 from .media import MissingFFmpeg, require_ffmpeg
 from .models import Audience, Reaction, VideoBrief, WaveResult
 from .pipeline import build_result, prepare, save_result
+from .settings import CODE_HEADER, DailySpend, access_code_required, allowed_origins, code_is_valid, daily_budget
 from .simulation import WAVES, run_cascade, simulate
 from .speech import transcribe
 from .summary import (STAGES, TIPS, all_reactions, furthest_stage, outcome_odds, reach, scroll_rate, segments,
@@ -43,17 +46,32 @@ UPLOADS = BACKEND / "uploads"  # videos analyzed through the website (kept out o
 DEFAULT_AUDIENCE = "indie_founders"
 VIDEO_TYPES = {".mp4", ".mov", ".m4v", ".webm"}
 MAX_UPLOAD_MB = 200
+MAX_ANALYSIS_COST = 0.50  # a cautious upper limit for analyzing one video, used for the budget check
 
 app = FastAPI(title="Viralyst API")
-# The website runs at a different address (port 3000). Browsers block calls between addresses
-# unless the server says it's allowed: that permission is called CORS.
-app.add_middleware(CORSMiddleware, allow_origins=["http://localhost:3000"], allow_methods=["*"], allow_headers=["*"])
+# The website runs at a different address. Browsers block calls between addresses unless
+# the server says it's allowed: that permission is called CORS.
+app.add_middleware(CORSMiddleware, allow_origins=allowed_origins(), allow_methods=["*"], allow_headers=["*"])
+
+SPEND = DailySpend()  # today's AI spending, checked against VIRALYST_DAILY_BUDGET
 
 
 def refresh_key() -> bool:
     """Re-read backend/.env, so a key added while the server is running is picked up without a restart."""
     load_dotenv(BACKEND / ".env")
     return has_api_key()
+
+
+def require_ai(code: str | None, max_cost: float) -> None:
+    """Every request that spends money passes these checks first: a key, the access code, the budget."""
+    if not refresh_key():
+        raise HTTPException(400, MISSING_KEY)
+    if not code_is_valid(code):
+        if code:
+            time.sleep(1)  # makes guessing codes one after another painfully slow
+        raise HTTPException(403, "AI features on this site need the access code.")
+    if not SPEND.can_spend(max_cost, daily_budget()):
+        raise HTTPException(429, "Today's AI budget is used up. It resets at midnight UTC.")
 
 
 # ---------- Which files the website may open ----------
@@ -128,9 +146,13 @@ def sse(event: dict) -> str:
 # ---------- Endpoints ----------
 
 @app.get("/api/status")
-def status() -> dict:
+def status(code: str | None = Header(None, alias=CODE_HEADER)) -> dict:
+    unlocked = code_is_valid(code)
     return {
         "ai_available": refresh_key(),
+        "ai_locked": access_code_required(),  # does this server want an access code?
+        "ai_unlocked": unlocked,  # ...and did this request bring the right one?
+        "budget": {"limit": daily_budget(), "spent_today": round(SPEND.spent_today(), 4)} if unlocked else None,
         "ffmpeg_available": shutil.which("ffmpeg") is not None,
         "models": list(PRICES),
         "default_model": DEFAULT_MODEL,
@@ -172,13 +194,14 @@ def estimate(video: str, model: str = DEFAULT_MODEL) -> dict:
 
 @app.get("/api/simulate")
 def simulate_live(video: str, audience: str | None = None, agent: Literal["rules", "ai"] = "rules",
-                  model: str = DEFAULT_MODEL, seed: int | None = None) -> StreamingResponse:
+                  model: str = DEFAULT_MODEL, seed: int | None = None,
+                  code: str | None = Header(None, alias=CODE_HEADER)) -> StreamingResponse:
     """Run one simulation and stream it: a "start" event, one "wave" event per wave, then "done"."""
     brief, crowd_audience = load_video(video, audience)
     if model not in PRICES:
         raise HTTPException(400, f"Unknown model {model!r}.")
-    if agent == "ai" and not refresh_key():
-        raise HTTPException(400, MISSING_KEY)
+    if agent == "ai":
+        require_ai(code, max_cost=estimate_cost(model, brief, sum(wave.size for wave in WAVES)))
     brain = LLMAgent(model) if agent == "ai" else MockAgent()
     seed = seed if seed is not None else random.randrange(10_000)
 
@@ -195,6 +218,9 @@ def simulate_live(video: str, audience: str | None = None, agent: Literal["rules
             yield sse({"type": "error", "message": BAD_KEY})
         except Exception as error:  # tell the page what went wrong instead of silently stopping
             yield sse({"type": "error", "message": str(error)})
+        finally:
+            if agent == "ai":
+                SPEND.record(brain.usage.cost)  # count what was really spent, even if the run failed
 
     return StreamingResponse(events(), media_type="text/event-stream", headers={"Cache-Control": "no-cache"})
 
@@ -253,10 +279,9 @@ def speech_to_text():
 @app.post("/api/analyze")
 def analyze_upload(file: UploadFile = File(...), caption: str = Form(""), audience: str = Form(DEFAULT_AUDIENCE),
                    model: str = Form(DEFAULT_MODEL), client=Depends(claude_client),
-                   listen=Depends(speech_to_text)) -> dict:
+                   listen=Depends(speech_to_text), code: str | None = Header(None, alias=CODE_HEADER)) -> dict:
     """Upload a video; get back its brief and Claude's feedback. It's then available to simulate."""
-    if not refresh_key():
-        raise HTTPException(400, MISSING_KEY)
+    require_ai(code, MAX_ANALYSIS_COST)
     try:
         require_ffmpeg()
     except MissingFFmpeg as error:
@@ -288,6 +313,7 @@ def analyze_upload(file: UploadFile = File(...), caption: str = Form(""), audien
     except (ValueError, RuntimeError) as error:
         raise HTTPException(422, f"Couldn't analyze that video: {error}")
 
+    SPEND.record(usage.cost)
     result = build_result(prepared, analysis, caption, audience_path, out_path, model)
     save_result(result, out_path)
     return {"id": f"uploads/{video_id}", **result, "cost": round(usage.cost, 4)}
