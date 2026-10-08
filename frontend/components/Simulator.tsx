@@ -26,6 +26,7 @@ export default function Simulator() {
   const [status, setStatus] = useState<Status | null>(null);
   const [examples, setExamples] = useState<Examples | null>(null);
   const [apiDown, setApiDown] = useState(false);
+  const [waking, setWaking] = useState(false); // the API is asleep (free hosting) and we're waiting for it
 
   const [videoId, setVideoId] = useState("");
   const [audienceId, setAudienceId] = useState("");
@@ -96,18 +97,38 @@ export default function Simulator() {
       setAudienceId((current) => (selectId || !current ? first?.audience ?? newExamples.audiences[0]?.id ?? "" : current));
       return newStatus;
     } catch {
-      setApiDown(true);
-      return null;
+      return null; // the caller decides whether to retry or give up
     }
   }, [startStream]);
 
-  // Load once when the page opens, and re-check whenever you come back to this tab
-  // (so a newly added API key or a freshly started server shows up).
+  // Connect when the page opens. On free hosting the API sleeps when nobody uses it and takes
+  // about a minute to wake up, so keep trying every 5 seconds for 2 minutes before giving up.
   useEffect(() => {
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    async function connect(attempt: number) {
+      const connected = await load();
+      if (cancelled) return;
+      if (connected) {
+        setWaking(false);
+      } else if (attempt >= 24) {
+        setWaking(false);
+        setApiDown(true);
+      } else {
+        setWaking(true);
+        timer = setTimeout(() => void connect(attempt + 1), 5000);
+      }
+    }
+    void connect(0);
+
+    // Re-check whenever you come back to this tab, so a new API key or a restarted server shows up.
     const refresh = () => void load();
-    refresh();
     window.addEventListener("focus", refresh);
-    return () => window.removeEventListener("focus", refresh);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+      window.removeEventListener("focus", refresh);
+    };
   }, [load]);
 
   // Stop any running simulation when the page closes.
@@ -174,10 +195,22 @@ export default function Simulator() {
         )}
       </header>
 
+      {!status && !apiDown && (
+        <div className="mt-6 rounded-xl border border-border bg-panel p-5 text-sm">
+          <p className="font-medium">{waking ? "Waking up the Viralyst server…" : "Connecting to the Viralyst server…"}</p>
+          {waking && (
+            <p className="mt-1 text-muted">
+              On the free plan the server sleeps when nobody is using it, and waking it takes about a minute.
+              This page keeps trying by itself.
+            </p>
+          )}
+        </div>
+      )}
+
       {apiDown && (
         <div className="mt-6 rounded-xl border border-bad p-5 text-sm">
           <p className="font-medium">Can&apos;t reach the Viralyst API at {API_URL}.</p>
-          <p className="mt-1 text-muted">Start it in a terminal, then come back to this tab:</p>
+          <p className="mt-1 text-muted">On the live site, try again in a few minutes. On your computer, start it in a terminal and reload:</p>
           <pre className="mt-2 rounded-lg bg-panel p-3 font-mono text-xs">cd ~/viralyst/backend{"\n"}uv run fastapi dev viralyst/api.py</pre>
         </div>
       )}

@@ -57,4 +57,4 @@ uv run scripts/readme_images.py                  # redraw the README images
 | `tests/` | Automated tests (pytest) |
 | `scripts/` | Developer helpers |
 | `.env.example` | Template for your Claude API key (copy to `.env`) |
-| `Dockerfile` | The recipe for the API's container (used by Hugging Face Spaces) |
+| `Dockerfile` | The recipe for the API's container (Render builds it) |

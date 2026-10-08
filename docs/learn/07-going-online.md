@@ -13,11 +13,10 @@ ideas behind it.
 | `backend/viralyst/settings.py` | Online settings from environment variables: allowed websites, access code, daily budget |
 | `backend/Dockerfile` | The recipe for the API's container |
 | `backend/.dockerignore` | Files that must never go into the container |
-| `.github/workflows/deploy-api.yml` | Sends the backend to Hugging Face on every push |
-| `deploy/huggingface/README.md` | The Space's settings (Hugging Face reads them from this README) |
-| `deploy/README.md` | The deployment guide |
+| `deploy/README.md` | The deployment guide (Vercel for the website, Render for the API) |
 | `frontend/components/AccessCode.tsx` | The unlock box on the website |
 | `frontend/lib/api.ts` | Now sends the access code and streams with `fetch` |
+| `frontend/components/Simulator.tsx` | Shows "Waking up the server…" and retries while a free API wakes up |
 | `backend/tests/test_deploy.py` | 10 tests that pretend to be the live server |
 
 ## Concept 1: Same code, different settings
@@ -27,11 +26,12 @@ variables**, settings handed to a program when it starts:
 
 | Variable | Where | Locally | Online |
 |---|---|---|---|
-| `ANTHROPIC_API_KEY` | API | in `backend/.env` | a Space **secret** |
-| `VIRALYST_ACCESS_CODE` | API | not set, so AI is open | a Space **secret** |
-| `VIRALYST_DAILY_BUDGET` | API | not set, so no cap | a Space variable |
+| `ANTHROPIC_API_KEY` | API | in `backend/.env` | set on Render |
+| `VIRALYST_ACCESS_CODE` | API | not set, so AI is open | set on Render |
+| `VIRALYST_DAILY_BUDGET` | API | not set, so no cap | set on Render |
 | `VIRALYST_ALLOWED_ORIGINS` | API | not set, so localhost only | your Vercel address |
-| `NEXT_PUBLIC_API_URL` | website | defaults to localhost:8000 | your Space address |
+| `PORT` | API | not set, so 8000 | chosen by Render (10000) |
+| `NEXT_PUBLIC_API_URL` | website | defaults to localhost:8000 | your Render address |
 
 One subtlety: `NEXT_PUBLIC_…` variables are **baked into the website when it's built**, because they end
 up in JavaScript that runs in visitors' browsers. So change one, and you must redeploy. That's also why
@@ -39,10 +39,9 @@ a secret must never have a `NEXT_PUBLIC_` name: everyone could read it.
 
 ## Concept 2: Secrets live outside git
 
-Your key and access code are never in the code or in git. Each service has a vault for them:
-GitHub **Secrets** (for the Action), Hugging Face **Secrets** (for the API), Vercel **Environment Variables**.
-A secret is hidden even from people who can read your public code. A *variable* is for settings that
-aren't secret, like the daily budget.
+Your key and access code are never in the code or in git. They're typed into each service's settings
+page (Render's and Vercel's **Environment Variables**), where only you can see them, even though anyone
+can read your code on GitHub.
 
 ## Concept 3: Containers
 
@@ -57,24 +56,26 @@ read from top to bottom:
    saves each step as a **layer** and reuses it if nothing above it changed, so editing code doesn't
    reinstall everything.
 5. `RUN python -c "...WhisperModel(...)"`: download the speech model at build time, not on the first upload.
-6. `CMD fastapi run ...`: the command that starts the API.
+6. `CMD fastapi run ... --port ${PORT:-8000}`: start the API on the port the host chooses (Render sets
+   `PORT`), or 8000 when nothing is set.
 
-Your Mac doesn't have Docker, so I **rehearsed** each step instead: assembled the Space folder the way the
-Action does, installed with Python 3.12 and no dev tools, started the API with the production command,
-and tested it with `curl`.
+Your Mac doesn't have Docker, so I **rehearsed** each step instead: installed with Python 3.12 and no dev
+tools, started the API with the production command and deployment settings, and tested it with `curl`.
+
+**Containers make you portable.** This guide was first written for Hugging Face Spaces. In 2026 Hugging
+Face started charging for Docker Spaces, so the API moved to Render. Because everything the API needs is
+inside the container, the move only changed one line of the Dockerfile (the port) and the instructions.
+Platforms change their rules; keeping your app portable means you're never stuck with one of them.
 
 ## Concept 4: Automatic deployment (CI/CD)
 
-A **GitHub Action** is a script GitHub runs on its own computers when something happens. Ours
-(`deploy-api.yml`) runs when you push changes to `backend/`:
+Both Render and Vercel **watch your GitHub repo**. When you push, Vercel rebuilds the website from
+`frontend/` and Render rebuilds the API's container from `backend/`, then each swaps the new version in.
+You never upload anything by hand. This is **CI/CD** (continuous integration / continuous deployment).
 
-1. It checks out your code.
-2. It builds a folder containing `backend/` plus the Space's settings README.
-3. It pushes that folder to your Space, which builds the container.
-
-It skips itself (`if: vars.HF_SPACE != ''`) until you've configured it, so it can't fail before then.
-Vercel does the same for the website without any file: it watches your repo. Push once, and both update.
-This is **CI/CD** (continuous integration / continuous deployment).
+The Hugging Face version needed a **GitHub Action** (a script GitHub runs on its own computers after each
+push) to send the code over. Render connects to GitHub directly, so that Action was deleted: less to
+maintain is better.
 
 ## Concept 5: Protecting your money (defense in depth)
 
@@ -104,7 +105,9 @@ A bonus: when the server refuses ("budget used up"), the page now shows the serv
 
 ## Concept 7: Free tiers have trade-offs
 
-- **Sleeping:** an unused Space goes to sleep, so the first visitor waits for it to wake up.
+- **Sleeping:** Render's free API sleeps after 15 minutes without visitors, and the next visitor waits
+  about a minute. The website shows "Waking up the Viralyst server…" and quietly retries every 5 seconds
+  for 2 minutes, instead of showing an error straight away.
 - **Temporary disk:** uploads disappear on restart. A real product would use a storage service and a database.
 - **Fair use:** free plans are for personal projects. A business would pay for guaranteed resources.
 
@@ -122,8 +125,8 @@ A bonus: when the server refuses ("budget used up"), the page now shows the serv
 1. **Read the Dockerfile** and explain each line in your own words.
 2. **Make your access code** (the command is in `deploy/README.md`) and save it in a password manager.
 3. **Deploy!** Follow `deploy/README.md` step by step.
-4. **Test the lock from the outside.** Run `curl https://<your-space>.hf.space/api/status`. Is AI locked?
+4. **Test the lock from the outside.** Run `curl https://<your-service>.onrender.com/api/status`. Is AI locked?
    Then add `-H "X-Viralyst-Code: <your code>"` and run it again.
 5. **See CORS in action.** Open any other website, open the browser console (Cmd+Option+J), and run
-   `fetch("https://<your-space>.hf.space/api/status")`. It's blocked. The same request with `curl` works.
+   `fetch("https://<your-service>.onrender.com/api/status")`. It's blocked. The same request with `curl` works.
    Why is that fine?
